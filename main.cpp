@@ -62,8 +62,9 @@ int main()
     std::cout << "Enter target MiB size: ";
     std::cin >> targetSize;
 
-    std::cout << "Enter input filename: ";
-    std::cin >> input;
+    std::cout << "Enter input filename: ";    
+    std::cin.ignore();
+    std::getline(std::cin, input);
 
     std::string lenCmd0 = ("ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" + input + "\"").c_str();
     const char *lenCmd = lenCmd0.c_str();
@@ -76,6 +77,7 @@ int main()
 
     std::cout << "target bit rate is " << targetBitrate << "kBit/s" << std::endl;
 
+    std::cout << "Compressing into x264 MP4...\n";
     std::string command1 = "ffmpeg -y -i \"" + input + "\" -c:v libx264 -b:v " + std::to_string(targetBitrate) + "k -pass 1 -an -f null NUL -loglevel error";
     std::string command2 = "ffmpeg -y -i \"" + input + "\" -c:v libx264 -b:v " + std::to_string(targetBitrate) + "k -pass 2 -c:a aac -b:a 128k \"" + input + "-compressed.mp4\" -loglevel error";
 
