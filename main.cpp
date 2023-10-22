@@ -1,5 +1,42 @@
 #include <iostream>
 #include <cstdlib>  // for the system function
+#include <cmath>
+
+#include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <array>
+
+#include <algorithm>
+
+
+double exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    result.erase(std::remove(result.begin(), result.end(), '\n'), result.end());
+    return std::stod(result);
+}
+
+// void execVoid(const char* cmd) {
+//     std::array<char, 128> buffer;
+//     std::string result;
+//     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+//     if (!pipe) {
+//         throw std::runtime_error("popen() failed!");
+//     }
+//     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+//         result += buffer.data();
+//     }        
+// }
+
 
 int main() {
     int targetSize, vidLength, targetBitrate;
@@ -8,11 +45,14 @@ int main() {
     std::cout << "Enter target MiB size: ";
     std::cin >> targetSize;
 
-    std::cout << "Enter vid length in seconds (add 2 seconds extra if you want): ";
-    std::cin >> vidLength;
-
     std::cout << "Enter input filename: ";
     std::cin >> input;
+
+    std::string lenCmd0 = ("ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \""+input+"\"").c_str();
+    const char* lenCmd = lenCmd0.c_str();
+
+    double vidLenLong = exec(lenCmd);
+    vidLength = std::ceil(vidLenLong);
 
     targetBitrate = (targetSize * 8388.608 / vidLength) - 128;
 
